@@ -1,0 +1,11 @@
+<!-- response_form.html -->
+{% extends 'flatpages/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+  <h2>Отклик на объявление</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Отправить</button>
+  </form>
+{% endblock %}

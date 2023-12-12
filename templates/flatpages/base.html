@@ -1,0 +1,45 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>Фанатский сервер MMORPG</title>
+    <!-- Ссылки на CSS-файлы, JavaScript и другие ресурсы -->
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <h1 class="mt-2">Фанатский сервер MMORPG</h1>
+            <hr class="mt-0 mb-4">
+            <header>
+                <nav>
+                    <ul>
+                        <li><a href="{% url 'post-list' %}">Объявления</a></li>
+                        <li><a href="{% url 'post-create' %}">Создать объявление</a></li>
+                        {% if user.is_authenticated %}
+                            <li><a href="{% url 'profile' pk=user.profile.pk %}">Мой профиль</a></li>
+                            <li><a href="{% url 'logout' %}">Выйти</a></li>
+                        {% else %}
+                            <li><a href="{% url 'login' %}">Войти</a></li>
+                            <li><a href="{% url 'register' %}">Регистрация</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </header>
+            <main>
+                {% block content %}
+                    <!-- Содержимое страницы будет вставлено здесь -->
+                {% endblock %}
+            </main>
+            <footer>
+                <!-- Информация о копирайте, контактные данные и т.д. -->
+            </footer>
+        </div>
+    </div>
+</div>
+</body>
+</html>

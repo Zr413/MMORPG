@@ -1,0 +1,8 @@
+{% extends "flatpages/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<h3>Выход!</h3>
+
+<a href="{% url 'login' %}">Click here to login again.</a>
+{% endblock %}

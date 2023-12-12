@@ -1,0 +1,13 @@
+<!-- post_form.html -->
+{% extends 'flatpages/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% if perms.guild.change_post %}
+  <h2>{{ view.action }} объявление</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Сохранить</button>
+  </form>
+    {% endif %}
+{% endblock %}

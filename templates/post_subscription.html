@@ -1,0 +1,20 @@
+{% extends 'flatpages/base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Subscriptions
+{% endblock title %}
+
+{% block content %}
+    {% for category in categories %}
+        <h2>{{ category.title }}</h2>
+        {% if category.user_subscribed %}
+            {% csrf_token %}
+            <a href="{% url 'subscriptions_action' 'unsubscribe' category.id %}"
+               class="btn-secondary btn-sm">{% trans 'Unsubscribe' %}</a>
+        {% else %}
+            <a href="{% url 'subscriptions_action' 'subscribe' category.id %}"
+               class="btn-secondary btn-sm">{% trans 'Subscribe' %}</a>
+        {% endif %}
+    {% endfor %}
+{% endblock content %}

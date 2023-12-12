@@ -1,0 +1,15 @@
+{% extends 'flatpages/base.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% block content %}
+    <h2>Отзывы</h2>
+    {% for response in responses %}
+        <div class="response">
+            <h3>Автор: {{ response.author.user.username }}</h3>
+            <p>{{ response.content }}</p>
+            <hr>
+        </div>
+    {% empty %}
+        <p>Нет отзывов.</p>
+    {% endfor %}
+{% endblock %}

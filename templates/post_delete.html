@@ -1,0 +1,19 @@
+{% extends 'flatpages/base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{% trans 'Deleting an article' %}</legend>
+                <h2>{% trans 'Are you sure you want to delete this entry?' %}"{{ post.title}}"</h2>
+                <p>{{ post.content|truncatewords:5 }}</p>
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-danger" type="submit">{% trans 'Yes, I want to delete' %}</button>
+                <a class="btn btn-outline-secondary" href="{% url 'post-detail' post.pk %}">{% trans 'Cancel' %}</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

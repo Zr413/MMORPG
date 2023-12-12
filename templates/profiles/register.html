@@ -1,0 +1,13 @@
+<!-- register.html -->
+{% extends "flatpages/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+  <div class="register">
+    <h2>Регистрация</h2>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+  </div>
+{% endblock %}
