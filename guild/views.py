@@ -1,31 +1,39 @@
+import django_filters
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
 from django.db.models import Exists, OuterRef
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views import View
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django_filters.views import FilterView
 
 from .forms import ProfileForm, PostForm
 from .models import Post, Response, Profile, Category, Subscription
 from django.core.mail import send_mail
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.core.paginator import Paginator
 
 import pytz
 
 from django.contrib import messages
 from .forms import UserRegisterForm
+from .filters import ResponseFilter, PostFilter
 
 
 # Показать все объявления
-class PostListView(ListView):
+class PostListView(ListView, FilterView):
     model = Post
+    ordering = '-created_at'
     context_object_name = 'posts'
     template_name = 'post_list.html'
     paginate_by = 10  # Количество объявлений на странице
+    filterset_class = PostFilter
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -43,16 +51,16 @@ class PostDetailView(DetailView):
     context_object_name = 'post'
     template_name = 'post_detail.html'
 
-    # def get_object(self, *args, **kwargs):  # переопределяем метод получения объекта
-    #
-    #     obj = cache.get(f'product-{self.kwargs["pk"]}', None)
-    #
-    #     # если объекта нет в кэше, то получаем его и записываем в кэш
-    #     if not obj:
-    #         obj = super().get_object(queryset=self.queryset)
-    #         cache.set(f'product-{self.kwargs["pk"]}', obj)
-    #
-    #     return obj
+    def get_object(self, *args, **kwargs):  # переопределяем метод получения объекта
+
+        obj = cache.get(f'post_{self.kwargs["pk"]}', None)
+
+        # если объекта нет в кэше, то получаем его и записываем в кэш
+        if not obj:
+            obj = super().get_object(queryset=self.queryset)
+            cache.set(f'post_{self.kwargs["pk"]}', obj)
+
+        return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -138,6 +146,63 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return context
 
 
+class PostSearchView(FilterView):
+    model = Post
+    template_name = 'post_search.html'
+    filterset_class = PostFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_time'] = timezone.localtime(timezone.now())
+        context['timezones'] = pytz.common_timezones
+        return context
+
+
+class ResponseView(ListView):
+    model = Response
+    context_object_name = 'responses'
+    template_name = 'responses/response_list.html'
+
+    def get_queryset(self):
+        # Получаем id поста из URL
+        post_id = self.kwargs['post_pk']
+        # Возвращаем все отзывы для данного поста
+        return Response.objects.filter(post__id=post_id, is_approved=True)
+
+
+# Ответы на объявления
+class ResponseModerationView(LoginRequiredMixin, ListView):
+    model = Response
+    template_name = 'responses/response_moderation.html'
+    context_object_name = 'responses'
+    filterset_class = ResponseFilter
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user.profile
+        return super().form_valid(form) and HttpResponseRedirect('/')
+
+    def get_queryset(self):
+        return Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_time'] = timezone.localtime(timezone.now())
+        context['timezones'] = pytz.common_timezones
+        return context
+
+
+class ResponseApproveView(View):
+    model = Response
+    context_object_name = 'responses'
+
+    def post(self, request, *args, **kwargs):
+        response = get_object_or_404(Response, id=kwargs['pk'])
+        if request.user.profile == response.post.author:
+            response.is_approved = True
+            response.save()
+        return redirect('response-moderation')
+
+
 # Ответить
 class ResponseCreateView(LoginRequiredMixin, CreateView):
     model = Response
@@ -156,6 +221,20 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
             fail_silently=False,
         )
         return redirect('post-detail', pk=response.post.pk)
+
+
+class ResponseDeleteView(DeleteView):
+    def post(self, request, *args, **kwargs):
+        response = get_object_or_404(Response, id=kwargs['pk'])
+        if request.user.profile == response.post.author:
+            response.delete()
+        return redirect('response-moderation')
+
+    # def delete(self, request, *args, **kwargs):
+    #     response_id = request.POST.get('pk')
+    #     response = get_object_or_404(Response, pk=response_id)
+    #     response.delete()
+    #     return JsonResponse({"status": "success"})
 
 
 # Представление профиля
@@ -190,39 +269,42 @@ class UserRegisterView(CreateView):
         return valid
 
 
-# Подписка
-@login_required
-@csrf_protect
-def subscriptions(request, action=None, pk=None):
-    if action and pk:
-        category = Category.objects.get(id=pk)
+# # Подписка
+# @login_required
+# @csrf_protect
+# def subscriptions(request, action=None, pk=None):
+#     if action and pk:
+#         category = Category.objects.get(id=pk)
+#
+#         if action == 'subscribe':
+#             Subscription.objects.get_or_create(user=request.user, category=category)
+#             messages.success(request, f'Вы успешно подписались на категорию {category.title}!')
+#         elif action == 'unsubscribe':
+#             Subscription.objects.filter(user=request.user, category=category).delete()
+#             messages.success(request, f'Вы успешно отписались от категории {category.title}!')
+#
+#     categories = Category.objects.annotate(
+#         user_subscribed=Exists(
+#             Subscription.objects.filter(
+#                 user=request.user,
+#                 category=OuterRef('pk'),
+#             )
+#         )
+#     ).order_by('title')
+#
+#     return render(request, 'post_subscription.html', {'categories': categories})
 
-        if action == 'subscribe':
-            Subscription.objects.get_or_create(user=request.user, category=category)
-            messages.success(request, f'Вы успешно подписались на категорию {category.title}!')
-        elif action == 'unsubscribe':
-            Subscription.objects.filter(user=request.user, category=category).delete()
-            messages.success(request, f'Вы успешно отписались от категории {category.title}!')
-
-    categories = Category.objects.annotate(
-        user_subscribed=Exists(
-            Subscription.objects.filter(
-                user=request.user,
-                category=OuterRef('pk'),
-            )
-        )
-    ).order_by('title')
-
-    return render(request, 'post_subscription.html', {'categories': categories})
-
-
-class ResponseView(ListView):
-    model = Response
-    context_object_name = 'responses'
-    template_name = 'responses/response_list.html'
-
-    def get_queryset(self):
-        # Получаем id поста из URL
-        post_id = self.kwargs['post_pk']
-        # Возвращаем все отзывы для данного поста
-        return Response.objects.filter(post__id=post_id)
+class SubscriptionView(View):
+    def post(self, request, *args, **kwargs):
+        category = get_object_or_404(Category, id=kwargs['pk'])
+        profile = Profile.objects.get(user=request.user)
+        subscription, created = Subscription.objects.get_or_create(profile=profile, category=category)
+        if created:
+            subscription.subscribed = True
+            subscription.save()
+            # Отправка письма
+            subject = 'Вы успешно подписались!'
+            message = f'Вы подписались на категорию {category.name}. Вы можете отписаться, перейдя по ' \
+                      f'ссылке: http://{get_current_site(request)}/unsubscribe/{subscription.id}/'
+            send_mail(subject, message, 'from@example.com', [request.user.email])
+        return redirect('post-list')

@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'sorl.thumbnail',
     # 'fpages',
-    # 'django_filters',
+    'django_filters',
     # 'allauth',
     # 'allauth.account',
     # 'allauth.socialaccount',
@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     # 'guild.middlewares.TimezoneMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     # 'django.middleware.common.CommonMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
 ]
@@ -196,7 +196,9 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+
 
 # ACCOUNT_FORMS = {'signup': 'guild.forms.CustomSignupForm'}
 # GRAPHENE = {

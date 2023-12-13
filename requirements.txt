@@ -13,3 +13,5 @@ six==1.16.0
 sorl-thumbnail==12.10.0
 sqlparse==0.4.4
 typing_extensions==4.8.0
+
+django-filter~=23.5

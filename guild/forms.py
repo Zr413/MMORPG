@@ -57,6 +57,12 @@ class ResponseForm(forms.ModelForm):
         fields = ['content']
 
 
+class ResponseModerationForm(forms.ModelForm):
+    class Meta:
+        model = Response
+        fields = ['is_approved']
+
+
 # Форма профиля
 class ProfileForm(forms.ModelForm):
     avatar = forms.ImageField()

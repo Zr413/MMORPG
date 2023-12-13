@@ -47,9 +47,11 @@ class Response(models.Model):
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
 
 
 class Subscription(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE,  related_name='subscriptions')
     category = models.ForeignKey(Category, on_delete=models.CASCADE,  related_name='subscriptions', null=True)
     subscribed = models.BooleanField(default=False)
+

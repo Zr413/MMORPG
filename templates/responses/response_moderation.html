@@ -1,0 +1,28 @@
+{% extends 'flatpages/base.html' %}
+
+
+{% block content %}
+    <h2>Модерация отзывов</h2>
+{#    <form method="get">#}
+{#        {{ filter.form.as_p }}#}
+{#        <button type="submit">Фильтровать</button>#}
+{#    </form>#}
+{#    {% for response in filter.qs %}#}
+{% for response in responses %}
+        <div class="response">
+            <h3>Автор: {{ response.author.user.username }}</h3>
+            <p>{{ response.content }}</p>
+            <form method="post" action="{% url 'response-approve' response.pk %}">
+                {% csrf_token %}
+                <button type="submit">Одобрить</button>
+            </form>
+            <form method="post" action="{% url 'response-delete' response.pk %}">
+                {% csrf_token %}
+                <button type="submit">Удалить</button>
+            </form>
+            <hr>
+        </div>
+    {% empty %}
+        <p>Нет отзывов для модерации.</p>
+    {% endfor %}
+{% endblock %}

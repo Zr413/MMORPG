@@ -3,6 +3,11 @@
 {% load crispy_forms_tags %}
 {% block content %}
     <h2>Список объявлений</h2>
+    <form method="get">
+    {{ filter.form.as_p }}
+    <button type="submit">Фильтровать</button>
+    <a href="{% url 'post-list' %}">Очистить фильтр</a>
+    </form>
     {% for post in posts %}
         <div class="post">
             <small class="text-muted">{{ post.created_at|date:'d.m.Y H:i' }}</small>
