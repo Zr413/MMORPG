@@ -2,19 +2,20 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block title %}
-    Subscriptions
+    <h2>Мои подписки</h2>
 {% endblock title %}
-
 {% block content %}
-    {% for category in categories %}
-        <h2>{{ category.title }}</h2>
-        {% if category.user_subscribed %}
-            {% csrf_token %}
-            <a href="{% url 'subscriptions_action' 'unsubscribe' category.id %}"
-               class="btn-secondary btn-sm">{% trans 'Unsubscribe' %}</a>
-        {% else %}
-            <a href="{% url 'subscriptions_action' 'subscribe' category.id %}"
-               class="btn-secondary btn-sm">{% trans 'Subscribe' %}</a>
-        {% endif %}
-    {% endfor %}
+    {% if subscriptions %}
+        <ul>
+            {% for subscription in subscriptions %}
+                <li>{{ subscription.category.name }}
+                    {% if subscription.subscribed %}(подписан){% endif %}
+                    {% csrf_token %}
+                    - <a href="{% url 'unsubscribe' subscription.id %}"
+                         class="btn-secondary btn-sm">Отписаться</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Вы не подписаны ни на одну категорию.</p>
+    {% endif %}
 {% endblock content %}

@@ -15,8 +15,13 @@
     <h2 class="article-title">{{ post.title }}</h2>
     <p class="article-content">{{ post.content }}</p>
     <li><a href="{% url 'response-create' pk=post.pk %}">Оставить отзыв</a></li>
-        <li><a href="{% url 'response-list' post_pk=post.pk %}">Все отзывы</a></li>
-{#                                <li><a href="{% url 'response-moderation'  %}">Модерация отзывов</a></li>#}
+    <li><a href="{% url 'response-list' post_pk=post.pk %}">Все отзывы</a></li>
+    {% if request.user.is_authenticated %}
+        <form method="post" action="{% url 'subscribe' post.category.id %}">
+            {% csrf_token %}
+            <button type="submit">Подписаться на эту категорию</button>
+        </form>
+    {% endif %}
     {% if perms.guild.change_post %}
         <form action={% url 'post-update' post.pk %}>
             <div class="form-group">

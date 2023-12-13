@@ -15,6 +15,10 @@
         {{ form.as_p }}
         <button type="submit" class="btn btn-success">Сохранить изменения</button>
     </form>
+    {# Кнопка для отображения подписок пользователя #}
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'subscriptions' %}" class="btn btn-primary">Подписки</a>
+    {% endif %}
 {% endblock %}
 
 

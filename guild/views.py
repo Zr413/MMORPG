@@ -1,22 +1,20 @@
-import django_filters
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
-from django.db.models import Exists, OuterRef
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.decorators.csrf import csrf_protect
+
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django_filters.views import FilterView
 
+from MMORPG import settings
 from .forms import ProfileForm, PostForm
 from .models import Post, Response, Profile, Category, Subscription
 from django.core.mail import send_mail
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.core.paginator import Paginator
 
 import pytz
@@ -216,7 +214,7 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
         send_mail(
             'New Response Received',
             f'You have received a new response to your post: {response.post.title}',
-            'from@example.com',
+            settings.EMAIL_HOST_USER,
             [response.post.author.user.email],
             fail_silently=False,
         )
@@ -251,7 +249,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return reverse('profile', kwargs={'pk': self.request.user.profile.pk})
 
     def form_valid(self, form):
-        messages.success(self.request, "The profile was updated successfully.")
+        messages.success(self.request, "Профиль успешно обновлен.")
         return super(ProfileUpdateView, self).form_valid(form)
 
 
@@ -294,7 +292,14 @@ class UserRegisterView(CreateView):
 #
 #     return render(request, 'post_subscription.html', {'categories': categories})
 
-class SubscriptionView(View):
+class SubscriptionView(ListView):
+    context_object_name = 'subscriptions'
+    template_name = 'post_subscription.html'
+    model = Subscription
+
+    def get_queryset(self):
+        return Subscription.objects.filter(profile=self.request.user.profile)
+
     def post(self, request, *args, **kwargs):
         category = get_object_or_404(Category, id=kwargs['pk'])
         profile = Profile.objects.get(user=request.user)
@@ -306,5 +311,20 @@ class SubscriptionView(View):
             subject = 'Вы успешно подписались!'
             message = f'Вы подписались на категорию {category.name}. Вы можете отписаться, перейдя по ' \
                       f'ссылке: http://{get_current_site(request)}/unsubscribe/{subscription.id}/'
-            send_mail(subject, message, 'from@example.com', [request.user.email])
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [request.user.email])
         return redirect('post-list')
+
+
+class UnsubscribeView(DeleteView):
+    model = Subscription
+
+    def delete(self, request, *args, **kwargs):
+        subscription = self.get_object()
+        category = subscription.category
+        profile = subscription.profile
+        subscription.delete()
+        # Отправка письма
+        subject = 'Вы успешно отписались!'
+        message = f'Вы отписались от категории {category.name}.'
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [profile.user.email])
+        return super().delete(request, *args, **kwargs)

@@ -55,3 +55,6 @@ class Subscription(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE,  related_name='subscriptions', null=True)
     subscribed = models.BooleanField(default=False)
 
+    def get_absolute_url(self):
+        return reverse('unsubscribe', args=[str(self.id)])
+
