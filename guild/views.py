@@ -191,7 +191,7 @@ class ResponseModerationView(LoginRequiredMixin, ListView):
         return context
 
 
-# Одобрить
+# Подтвердить отклик на пост
 class ResponseApproveView(View):
     model = Response
     context_object_name = 'responses'
@@ -204,7 +204,8 @@ class ResponseApproveView(View):
         return redirect('response-moderation')
 
 
-# Ответить
+# Создание отклика на пост и отправка письма автору поста
+# Сигнал отправляется после сохранения отклика и он обрабатывается данным методом
 class ResponseCreateView(LoginRequiredMixin, CreateView):
     model = Response
     fields = ['content']
