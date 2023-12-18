@@ -52,9 +52,11 @@ class Response(models.Model):
 
 class Subscription(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE,  related_name='subscriptions')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE,  related_name='subscriptions', null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE,  related_name='subscriptions')
     subscribed = models.BooleanField(default=False)
 
-    def get_absolute_url(self):
-        return reverse('unsubscribe', args=[str(self.id)])
+    def str(self):
+        return f'{self.profile.user.username} subscribed to {self.category.name}'
 
+    class Meta:
+        unique_together = ('profile', 'category')

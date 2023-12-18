@@ -9,10 +9,13 @@
         <ul>
             {% for subscription in subscriptions %}
                 <li>{{ subscription.category.name }}
-                    {% if subscription.subscribed %}(подписан){% endif %}
+                {% if subscription.subscribed %}(подписан)
+                <form method="post" action="{% url 'unsubscribe' subscription.pk %}">
                     {% csrf_token %}
-                    - <a href="{% url 'unsubscribe' subscription.id %}"
-                         class="btn-secondary btn-sm">Отписаться</a></li>
+                    <input type="submit" value="Отписаться"/>
+                </form>
+                {% else %}(отписан)
+                {% endif %}
             {% endfor %}
         </ul>
     {% else %}

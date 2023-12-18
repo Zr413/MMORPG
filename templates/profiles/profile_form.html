@@ -20,17 +20,3 @@
         <a href="{% url 'subscriptions' %}" class="btn btn-primary">Подписки</a>
     {% endif %}
 {% endblock %}
-
-
-{#{% block content %}#}
-{#    <h2>Редактирование профиля</h2>#}
-{#    {% if request.user.author.avatar %}#}
-{#        <img src="{{ request.user.author.avatar.url }}" alt="Аватар" style="max-width: 100px; max-height: 100px;">#}
-{#    {% endif %}#}
-{#    <form method="post" enctype="multipart/form-data">#}
-{#        {% csrf_token %}#}
-{#        {{ user_form.as_p }}#}
-{#        {{ author_form.as_p }}#}
-{#        <button type="submit">Сохранить изменения</button>#}
-{#    </form>#}
-{#{% endblock %}#}

@@ -144,6 +144,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return context
 
 
+#  Поиск по объявлениям
 class PostSearchView(FilterView):
     model = Post
     template_name = 'post_search.html'
@@ -156,6 +157,7 @@ class PostSearchView(FilterView):
         return context
 
 
+#  Ответы на объявления
 class ResponseView(ListView):
     model = Response
     context_object_name = 'responses'
@@ -189,6 +191,7 @@ class ResponseModerationView(LoginRequiredMixin, ListView):
         return context
 
 
+# Одобрить
 class ResponseApproveView(View):
     model = Response
     context_object_name = 'responses'
@@ -213,7 +216,7 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
         response = form.save()
         send_mail(
             'New Response Received',
-            f'You have received a new response to your post: {response.post.title}',
+            f'Вы получили новый ответ на свое сообщение: {response.post.title}',
             settings.EMAIL_HOST_USER,
             [response.post.author.user.email],
             fail_silently=False,
@@ -221,18 +224,13 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
         return redirect('post-detail', pk=response.post.pk)
 
 
+#  Удалить ответ
 class ResponseDeleteView(DeleteView):
     def post(self, request, *args, **kwargs):
         response = get_object_or_404(Response, id=kwargs['pk'])
         if request.user.profile == response.post.author:
             response.delete()
         return redirect('response-moderation')
-
-    # def delete(self, request, *args, **kwargs):
-    #     response_id = request.POST.get('pk')
-    #     response = get_object_or_404(Response, pk=response_id)
-    #     response.delete()
-    #     return JsonResponse({"status": "success"})
 
 
 # Представление профиля
@@ -267,31 +265,7 @@ class UserRegisterView(CreateView):
         return valid
 
 
-# # Подписка
-# @login_required
-# @csrf_protect
-# def subscriptions(request, action=None, pk=None):
-#     if action and pk:
-#         category = Category.objects.get(id=pk)
-#
-#         if action == 'subscribe':
-#             Subscription.objects.get_or_create(user=request.user, category=category)
-#             messages.success(request, f'Вы успешно подписались на категорию {category.title}!')
-#         elif action == 'unsubscribe':
-#             Subscription.objects.filter(user=request.user, category=category).delete()
-#             messages.success(request, f'Вы успешно отписались от категории {category.title}!')
-#
-#     categories = Category.objects.annotate(
-#         user_subscribed=Exists(
-#             Subscription.objects.filter(
-#                 user=request.user,
-#                 category=OuterRef('pk'),
-#             )
-#         )
-#     ).order_by('title')
-#
-#     return render(request, 'post_subscription.html', {'categories': categories})
-
+#  Подписки на категории
 class SubscriptionView(ListView):
     context_object_name = 'subscriptions'
     template_name = 'post_subscription.html'
@@ -312,19 +286,21 @@ class SubscriptionView(ListView):
             message = f'Вы подписались на категорию {category.name}. Вы можете отписаться, перейдя по ' \
                       f'ссылке: http://{get_current_site(request)}/unsubscribe/{subscription.id}/'
             send_mail(subject, message, settings.EMAIL_HOST_USER, [request.user.email])
-        return redirect('post-list')
+        return redirect('subscriptions')
 
 
+#  Отписка от категории
 class UnsubscribeView(DeleteView):
     model = Subscription
+    template_name = 'post_subscription.html'
+    success_url = reverse_lazy('subscriptions')
 
     def delete(self, request, *args, **kwargs):
-        subscription = self.get_object()
-        category = subscription.category
-        profile = subscription.profile
-        subscription.delete()
+        subscription = get_object_or_404(Subscription, id=kwargs['pk'])
+        subscription.subscribed = False
+        subscription.save()
         # Отправка письма
         subject = 'Вы успешно отписались!'
-        message = f'Вы отписались от категории {category.name}.'
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [profile.user.email])
-        return super().delete(request, *args, **kwargs)
+        message = f'Вы отписались от категории {subscription.category.name}.'
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [request.user.email])
+        return redirect('subscriptions')
