@@ -19,36 +19,7 @@ def send_new_post_notification(sender, instance, created, **kwargs):
             send_mail(subject, message, settings.EMAIL_HOST_USER, [subscription.profile.user.email])
 
 
-# Уведомление автору отклика на пост при успешном принятии отклика
-# Сигнал отправляется после сохранения отклика и он обрабатывается данным методом
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-# Сигнал отправляется после принятия отклика автором поста
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-
-# @receiver(post_save, sender=Response)
-# def send_response_approved_notification(sender, instance, is_approved, **kwargs):
-#     if created and instance.post.author != instance.author:
-#         response = Response.objects.get(id=instance.id)
-#         send_mail(
-#             'Your Response Approved',
-#             f'Your response on post "{response.post.title}" was approved!',
-#             settings.EMAIL_HOST_USER,
-#             [response.post.author.user.email],
-#             fail_silently=False,
-#         )
-#         return redirect('post-detail', pk=response.post.pk)
-
-
 # Уведомление автору отклика на пост при обобрении отклика
-# Сигнал отправляется после обобрения отклика автором поста и при успешном принятии отклика
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-# Сигнал отправляется после обобрения отклика автором поста
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-# Сигнал отправляется после обобрения отклика автором поста и при успешном приня
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-# Сигнал отправляется после обобрения отклика автором поста
-# Сигнал отправляется только для автора отклика, который откликался на данный пост
-# Сигнал отправляется после обобрения отклика автором поста и при успешном принят
 @receiver(post_save, sender=Response)
 def send_response_approved_notification(sender, instance, created, **kwargs):
     if created and instance.post.author != instance.author:
