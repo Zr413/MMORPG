@@ -36,7 +36,7 @@ def send_response_approved_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Response)
 def send_approval_notification(sender, instance, created, **kwargs):
     if not created and instance.is_approved:
-        post_author = instance.post.author  # Получаем автора поста
+        post_author = instance.author.user.email  # Получаем автора поста
         subject = 'Ваш отзыв одобрен'
         message = f'Ваш отзыв на пост "{instance.post}" был одобрен.'
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [instance.author.user.email])
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [post_author])
