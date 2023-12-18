@@ -33,6 +33,7 @@ def send_response_approved_notification(sender, instance, created, **kwargs):
         )
         return redirect('post-detail', pk=response.post.pk)
 
+
 @receiver(post_save, sender=Response)
 def send_approval_notification(sender, instance, created, **kwargs):
     if not created and instance.is_approved:
