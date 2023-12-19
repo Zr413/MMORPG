@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
 from django.core.mail import mail_admins, EmailMultiAlternatives
 
-from .models import Post, Response, Profile
+from .models import Post, Response, Profile, Category
 
 
 # Форма регистрации
@@ -39,6 +39,10 @@ class UserRegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['email', 'username', 'first_name', 'last_name', 'password1', 'password2']
+
+
+class ConfirmationCodeForm(forms.Form):
+    code = forms.CharField(label='Confirmation Code', max_length=10)
 
 
 # Форма объявления
@@ -79,3 +83,7 @@ class ProfileForm(forms.ModelForm):
         user.last_name = self.cleaned_data['last_name']
         user.save()
         return super().save(commit)
+
+
+class ResponseFilterForm(forms.Form):
+    category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Select category", required=False)

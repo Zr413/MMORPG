@@ -5,8 +5,10 @@
     <h2>Отзывы</h2>
     {% for response in responses %}
         <div class="response">
-            <h3>Автор: {{ response.author.user.username }}</h3>
+            <h3>Автор отзыва: {{ response.author.user.username }}</h3>
+            <h3>категория новости: {{ response.post.category.name }}</h3>
             <p>{{ response.content }}</p>
+            <h3>новость: <a href="{% url 'post-detail' pk=response.post.pk %}">{{ response.post.title }}</a></h3>
             <hr>
         </div>
     {% empty %}

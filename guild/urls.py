@@ -8,7 +8,7 @@ from django.contrib.auth import views as auth_views
 
 from guild.views import ResponseApproveView, ResponseModerationView, PostListView, PostDetailView, PostCreateView, \
     PostUpdateView, PostDeleteView, ResponseCreateView, ResponseView, PostSearchView, UserRegisterView, \
-    ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView
+    ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView, ConfirmRegistrationView
 
 urlpatterns = [
     path('', PostListView.as_view(), name='post-list'),
@@ -26,6 +26,7 @@ urlpatterns = [
     path('subscriptions/', SubscriptionView.as_view(), name='subscriptions'),
     path('subscriptions/<int:pk>/', UnsubscribeView.as_view(), name='unsubscribe'),
     path('login/', auth_views.LoginView.as_view(template_name='profiles/login.html'), name='login'),
+    path('сonfirmed/', ConfirmRegistrationView.as_view(), name='confirm'),
     path('logout/', auth_views.LogoutView.as_view(template_name='profiles/logout.html'), name='logout'),
     path('register/', UserRegisterView.as_view(), name='register'),
     path('profile/<int:pk>/', ProfileUpdateView.as_view(), name='profile'),

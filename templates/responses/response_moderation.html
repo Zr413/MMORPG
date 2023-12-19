@@ -3,14 +3,14 @@
 
 {% block content %}
     <h2>Модерация отзывов</h2>
-{#    <form method="get">#}
-{#        {{ filter.form.as_p }}#}
-{#        <button type="submit">Фильтровать</button>#}
-{#    </form>#}
-{#    {% for response in filter.qs %}#}
-{% for response in responses %}
+    <form method="get">
+        {{ filter_form.as_p }}
+        <button type="submit">Фильтровать</button>
+    </form>
+    {% for response in responses %}
         <div class="response">
             <h3>Автор: {{ response.author.user.username }}</h3>
+            <h3>Категория: {{ response.post.category }}</h3>
             <p>{{ response.content }}</p>
             <form method="post" action="{% url 'response-approve' response.pk %}">
                 {% csrf_token %}

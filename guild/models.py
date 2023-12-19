@@ -12,9 +12,17 @@ class Profile(models.Model):
         ('M', 'Male'),
     ]
     bio = models.CharField(max_length=1, choices=BIO_CHOICES, default='M')
+    one_time_password = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.user.profile
+
+    def check_confirmation_code(self, code):
+        return self.one_time_password == code  # Checking if the provided code matches the one in the profile
+
+    def confirm_registration(self):
+        self.email_confirmed = True  # Marking the email as confirmed
+        self.save()  # Saving the profile
 
 
 class Category(models.Model):

@@ -1,3 +1,4 @@
+import pyotp
 from django.contrib.auth import login
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
@@ -11,10 +12,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django_filters.views import FilterView
 
 from MMORPG import settings
-from .forms import ProfileForm, PostForm
+from .forms import ProfileForm, PostForm, ConfirmationCodeForm, ResponseFilterForm
 from .models import Post, Response, Profile, Category, Subscription
 from django.core.mail import send_mail
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.core.paginator import Paginator
 
 import pytz
@@ -181,13 +182,21 @@ class ResponseModerationView(LoginRequiredMixin, ListView):
         form.instance.author = self.request.user.profile
         return super().form_valid(form) and HttpResponseRedirect('/')
 
+    # def get_queryset(self):
+    #     return Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
+
     def get_queryset(self):
-        return Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
+        queryset = Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
+        category_filter = self.request.GET.get('category')  # Assuming 'category' is the name of the filter field
+        if category_filter:
+            queryset = queryset.filter(post__category_id=category_filter)  # Use category_id for filtering
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['current_time'] = timezone.localtime(timezone.now())
         context['timezones'] = pytz.common_timezones
+        context['filter_form'] = ResponseFilterForm()
         return context
 
 
@@ -253,17 +262,70 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 
 # Регистрация
+# class UserRegisterView(CreateView):
+#     form_class = UserRegisterForm
+#     template_name = 'profiles/register.html'
+#     success_url = reverse_lazy('login')
+#
+#     def form_valid(self, form):
+#         valid = super().form_valid(form)
+#         login(self.request, self.object)
+#         # Создание профиля пользователя при регистрации
+#         Profile.objects.create(user=self.object)
+#         return valid
+
+
 class UserRegisterView(CreateView):
     form_class = UserRegisterForm
     template_name = 'profiles/register.html'
-    success_url = reverse_lazy('login')
+    success_url = reverse_lazy('confirm')
 
     def form_valid(self, form):
         valid = super().form_valid(form)
-        login(self.request, self.object)
+        user = self.object
+        login(self.request, user)
+
         # Создание профиля пользователя при регистрации
-        Profile.objects.create(user=self.object)
+        profile = Profile.objects.create(user=user)
+
+        # Генерация одноразового кода
+        totp = pyotp.TOTP(pyotp.random_base32())
+        one_time_password = totp.now()
+
+        # Сохранение одноразового кода в профиле пользователя
+        profile.one_time_password = one_time_password
+        profile.save()
+
+        # Отправка кода подтверждения пользователю, например, по почте или SMS
+        send_mail(
+            'Код подтверждения',
+            f'Ваш код подтверждения: {one_time_password}',
+            settings.EMAIL_HOST_USER,
+            [user.email],
+            fail_silently=False,
+        )
+
         return valid
+
+
+class ConfirmRegistrationView(View):
+    template_name = 'profiles/confirm_registration.html'
+
+    def get(self, request, *args, **kwargs):
+        form = ConfirmationCodeForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = ConfirmationCodeForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['code']
+            # Проверка совпадения кода с кодом пользователя
+            if request.user.profile.check_confirmation_code(code):
+                request.user.profile.confirm_registration()  # Подтверждение регистрации пользователя
+                return redirect('post-list')  # Редирект на главную страницу после подтверждения регистрации
+            else:
+                form.add_error('code', 'Неверный код подтверждения')
+        return render(request, self.template_name, {'form': form})
 
 
 #  Подписки на категории

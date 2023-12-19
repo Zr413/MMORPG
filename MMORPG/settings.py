@@ -218,6 +218,7 @@ ADMINS = (
     ('Andrei', os.getenv("EMAIL_HOST_USER")),
 )
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = os.getenv("EMAIL_HOST_USER")
 
 SITE_URL = 'http://127.0.0.1:8000/'
 

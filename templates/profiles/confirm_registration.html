@@ -1,0 +1,11 @@
+<!-- confirm_registration.html -->
+{% extends 'flatpages/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <h2>Подтверждение профиля</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Подтвердить регистрацию</button>
+    </form>
+{% endblock %}
