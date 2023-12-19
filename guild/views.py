@@ -10,6 +10,9 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django_filters.views import FilterView
+from django_otp import user_has_device
+from django_otp.forms import OTPTokenForm
+from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from MMORPG import settings
 from .forms import ProfileForm, PostForm, ConfirmationCodeForm, ResponseFilterForm
@@ -39,8 +42,21 @@ class PostListView(ListView, FilterView):
         paginator = Paginator(self.get_queryset(), self.paginate_by)
         page = self.request.GET.get('page')
         posts = paginator.get_page(page)
+        context['filterset'] = self.filterset
         context['posts'] = posts
+        context['filter'] = PostFilter(self.request.GET, queryset=self.get_queryset())
+        context['current_time'] = timezone.localtime(timezone.now())
+        context['timezones'] = pytz.common_timezones
         return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        self.filterset = PostFilter(self.request.GET, queryset)
+        return self.filterset.qs
+
+    def post(self, request):
+        request.session['django_timezone'] = request.POST['timezone']
+        return redirect('/')
 
 
 # Показать объявление
@@ -182,14 +198,11 @@ class ResponseModerationView(LoginRequiredMixin, ListView):
         form.instance.author = self.request.user.profile
         return super().form_valid(form) and HttpResponseRedirect('/')
 
-    # def get_queryset(self):
-    #     return Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
-
     def get_queryset(self):
         queryset = Response.objects.filter(post__author=self.request.user.profile, is_approved=False)
-        category_filter = self.request.GET.get('category')  # Assuming 'category' is the name of the filter field
+        category_filter = self.request.GET.get('category')
         if category_filter:
-            queryset = queryset.filter(post__category_id=category_filter)  # Use category_id for filtering
+            queryset = queryset.filter(post__category_id=category_filter)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -214,7 +227,6 @@ class ResponseApproveView(View):
 
 
 # Создание отклика на пост и отправка письма автору поста
-# Сигнал отправляется после сохранения отклика и он обрабатывается данным методом
 class ResponseCreateView(LoginRequiredMixin, CreateView):
     model = Response
     fields = ['content']
@@ -261,20 +273,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return super(ProfileUpdateView, self).form_valid(form)
 
 
-# Регистрация
-# class UserRegisterView(CreateView):
-#     form_class = UserRegisterForm
-#     template_name = 'profiles/register.html'
-#     success_url = reverse_lazy('login')
-#
-#     def form_valid(self, form):
-#         valid = super().form_valid(form)
-#         login(self.request, self.object)
-#         # Создание профиля пользователя при регистрации
-#         Profile.objects.create(user=self.object)
-#         return valid
-
-
 class UserRegisterView(CreateView):
     form_class = UserRegisterForm
     template_name = 'profiles/register.html'
@@ -305,7 +303,27 @@ class UserRegisterView(CreateView):
             fail_silently=False,
         )
 
-        return valid
+        # return valid
+        # Редирект на страницу верификации одноразового кода
+        return redirect('verify_otp')
+
+
+def verify_otp(request):
+    if not user_has_device(request.user):
+        return redirect(reverse('enable_otp'))
+
+    device = TOTPDevice.objects.get(user=request.user)
+    if request.method == 'POST':
+        form = OTPTokenForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            if form.device == device:
+                request.user.is_verified = True  # Устанавливаем флаг подтверждения
+                request.user.save()
+                return redirect('post-list')  # Редирект на домашнюю страницу после верификации
+    else:
+        form = OTPTokenForm(user=request.user)
+
+    return render(request, 'profiles/confirm_registration.html', {'form': form})
 
 
 class ConfirmRegistrationView(View):

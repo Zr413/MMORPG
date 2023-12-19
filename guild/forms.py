@@ -86,4 +86,4 @@ class ProfileForm(forms.ModelForm):
 
 
 class ResponseFilterForm(forms.Form):
-    category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Select category", required=False)
+    category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Выберите категорию", required=False)

@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'sorl.thumbnail',
     # 'fpages',
     'django_filters',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     # 'allauth',
     # 'allauth.account',
     # 'allauth.socialaccount',

@@ -4,14 +4,15 @@
 {% block content %}
     <h2>Список объявлений</h2>
     <form method="get">
-    {{ filter.form.as_p }}
-    <button type="submit">Фильтровать</button>
-    <a href="{% url 'post-list' %}">Очистить фильтр</a>
+        {{ filter.form.as_p }}
+        <button type="submit">Поиск</button>
+        <a href="{% url 'post-list' %}">Очистить фильтр</a>
     </form>
     {% for post in posts %}
         <div class="post">
             <small class="text-muted">{{ post.created_at|date:'d.m.Y H:i' }}</small>
-            <small class="text-muted">{{ post.author.user }}</small><br>
+            <small class="text-muted">{{ post.author.user }}</small>
+            <small class="text-muted">{{ post.category.name }}</small><br>
             <h3>{{ post.title }}</h3>
             <p>{{ post.content|truncatewords:30 }}</p>
             <a href="{% url 'post-detail' pk=post.pk %}">Подробнее</a>

@@ -44,7 +44,7 @@ class Post(models.Model):
     image = models.ImageField(upload_to='images/', null=True, blank=True)
 
     def __str__(self):
-        return f'{self.title.title()}: {self.content}, {self.title.title()}: {self.category}, {self.title.title()}: {self.image}'
+        return f'{self.title}: {self.content}, {self.title}: {self.category}, {self.title}: {self.image}'
 
     def get_absolute_url(self):
         return reverse('post-detail', args=[str(self.id)])
