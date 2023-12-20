@@ -2,12 +2,10 @@ from django.urls import path
 
 from django.conf.urls.static import static
 from MMORPG import settings
-
-from guild import views
 from django.contrib.auth import views as auth_views
 
 from guild.views import ResponseApproveView, ResponseModerationView, PostListView, PostDetailView, PostCreateView, \
-    PostUpdateView, PostDeleteView, ResponseCreateView, ResponseView, PostSearchView, UserRegisterView, \
+    PostUpdateView, PostDeleteView, ResponseCreateView, ResponseView, UserRegisterView, \
     ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView, ConfirmRegistrationView
 
 urlpatterns = [
@@ -18,7 +16,6 @@ urlpatterns = [
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
     path('post/<int:pk>/response/new/', ResponseCreateView.as_view(), name='response-create'),
     path('post/<int:post_pk>/responses/', ResponseView.as_view(), name='response-list'),
-    path('search/', PostSearchView.as_view(), name='post-search'),
     path('responses/moderation/', ResponseModerationView.as_view(), name='response-moderation'),
     path('response/<int:pk>/approve/', ResponseApproveView.as_view(), name='response-approve'),
     path('response/<int:pk>/delete/', ResponseDeleteView.as_view(), name='response-delete'),

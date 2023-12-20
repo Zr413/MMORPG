@@ -3,9 +3,9 @@
 {% load crispy_forms_tags %}
 {% block content %}
     <h2>Подтверждение профиля</h2>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Подтвердить регистрацию</button>
+        <button type="submit" class="btn btn-success">Подтвердить почту</button>
     </form>
 {% endblock %}

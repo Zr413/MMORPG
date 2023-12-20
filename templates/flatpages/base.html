@@ -19,8 +19,8 @@
                 <nav>
                     <ul>
                         <li><a href="{% url 'post-list' %}">Объявления</a></li>
-                        <li><a href="{% url 'post-create' %}">Создать объявление</a></li>
                         {% if user.is_authenticated %}
+                            <li><a href="{% url 'post-create' %}">Создать объявление</a></li>
                             <li><a href="{% url 'profile' pk=user.profile.pk %}">Мой профиль</a></li>
                             <li><a href="{% url 'response-moderation' %}">Модерация отзывов</a></li>
                             <li><a href="{% url 'logout' %}">Выйти</a></li>

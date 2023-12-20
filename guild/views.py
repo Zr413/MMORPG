@@ -1,5 +1,6 @@
 import pyotp
 from django.contrib.auth import login
+
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.http import HttpResponseRedirect
@@ -10,11 +11,9 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django_filters.views import FilterView
-from django_otp import user_has_device
-from django_otp.forms import OTPTokenForm
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from MMORPG import settings
+
 from .forms import ProfileForm, PostForm, ConfirmationCodeForm, ResponseFilterForm
 from .models import Post, Response, Profile, Category, Subscription
 from django.core.mail import send_mail
@@ -102,7 +101,6 @@ class PostCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
             form.instance.image = self.request.FILES['image']
         return super().form_valid(form) and HttpResponseRedirect('/')
 
-    # Создать объявление
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['current_time'] = timezone.localtime(timezone.now())
@@ -110,7 +108,7 @@ class PostCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return context
 
 
-# Обновить объявление
+# Обновить пост
 class PostUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, UpdateView):
     permission_required = ('guild.change_post',)
     raise_exception = True
@@ -138,7 +136,7 @@ class PostUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTest
         return context
 
 
-# Удалить объявление
+# Удалить пост
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     context_object_name = 'post'
@@ -161,20 +159,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return context
 
 
-#  Поиск по объявлениям
-class PostSearchView(FilterView):
-    model = Post
-    template_name = 'post_search.html'
-    filterset_class = PostFilter
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['current_time'] = timezone.localtime(timezone.now())
-        context['timezones'] = pytz.common_timezones
-        return context
-
-
-#  Ответы на объявления
+#  Ответы на пост
 class ResponseView(ListView):
     model = Response
     context_object_name = 'responses'
@@ -187,7 +172,7 @@ class ResponseView(ListView):
         return Response.objects.filter(post__id=post_id, is_approved=True)
 
 
-# Ответы на объявления
+# Модерация откликов на пост и отправка письма автору поста
 class ResponseModerationView(LoginRequiredMixin, ListView):
     model = Response
     template_name = 'responses/response_moderation.html'
@@ -195,7 +180,11 @@ class ResponseModerationView(LoginRequiredMixin, ListView):
     filterset_class = ResponseFilter
 
     def form_valid(self, form):
-        form.instance.author = self.request.user.profile
+        if self.request.user.profile.email_confirmed:
+            form.instance.author = self.request.user.profile
+            form.instance.is_approved = True
+        else:
+            return redirect('confirm')
         return super().form_valid(form) and HttpResponseRedirect('/')
 
     def get_queryset(self):
@@ -221,8 +210,11 @@ class ResponseApproveView(View):
     def post(self, request, *args, **kwargs):
         response = get_object_or_404(Response, id=kwargs['pk'])
         if request.user.profile == response.post.author:
-            response.is_approved = True
-            response.save()
+            if request.user.profile.email_confirmed:
+                response.is_approved = True
+                response.save()
+            else:
+                return redirect('confirm')
         return redirect('response-moderation')
 
 
@@ -233,25 +225,31 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
     template_name = 'responses/response_form.html'
 
     def form_valid(self, form):
-        form.instance.author = self.request.user.profile
-        form.instance.post = Post.objects.get(pk=self.kwargs['pk'])
-        response = form.save()
-        send_mail(
-            'New Response Received',
-            f'Вы получили новый ответ на свое сообщение: {response.post.title}',
-            settings.EMAIL_HOST_USER,
-            [response.post.author.user.email],
-            fail_silently=False,
-        )
+        if self.request.user.profile.email_confirmed:
+            form.instance.author = self.request.user.profile
+            form.instance.post = Post.objects.get(pk=self.kwargs['pk'])
+            response = form.save()
+            send_mail(
+                'Получен новый ответ',
+                f'Вы получили новый ответ на свое сообщение: {response.post.title}',
+                settings.EMAIL_HOST_USER,
+                [response.post.author.user.email],
+                fail_silently=False,
+            )
+        else:
+            return redirect('confirm')
         return redirect('post-detail', pk=response.post.pk)
 
 
-#  Удалить ответ
+#  Удалить отзыв
 class ResponseDeleteView(DeleteView):
     def post(self, request, *args, **kwargs):
         response = get_object_or_404(Response, id=kwargs['pk'])
         if request.user.profile == response.post.author:
-            response.delete()
+            if request.user.profile.email_confirmed:
+                response.delete()
+            else:
+                return redirect('confirm')
         return redirect('response-moderation')
 
 
@@ -273,18 +271,18 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return super(ProfileUpdateView, self).form_valid(form)
 
 
+#  Регистрация пользователя
 class UserRegisterView(CreateView):
     form_class = UserRegisterForm
     template_name = 'profiles/register.html'
-    success_url = reverse_lazy('confirm')
+    success_url = reverse_lazy('login')
 
     def form_valid(self, form):
         valid = super().form_valid(form)
         user = self.object
         login(self.request, user)
 
-        # Создание профиля пользователя при регистрации
-        profile = Profile.objects.create(user=user)
+        profile = Profile.objects.create(user=user, email_confirmed=False)
 
         # Генерация одноразового кода
         totp = pyotp.TOTP(pyotp.random_base32())
@@ -303,29 +301,11 @@ class UserRegisterView(CreateView):
             fail_silently=False,
         )
 
-        # return valid
         # Редирект на страницу верификации одноразового кода
-        return redirect('verify_otp')
+        return redirect('post-list')
 
 
-def verify_otp(request):
-    if not user_has_device(request.user):
-        return redirect(reverse('enable_otp'))
-
-    device = TOTPDevice.objects.get(user=request.user)
-    if request.method == 'POST':
-        form = OTPTokenForm(user=request.user, data=request.POST)
-        if form.is_valid():
-            if form.device == device:
-                request.user.is_verified = True  # Устанавливаем флаг подтверждения
-                request.user.save()
-                return redirect('post-list')  # Редирект на домашнюю страницу после верификации
-    else:
-        form = OTPTokenForm(user=request.user)
-
-    return render(request, 'profiles/confirm_registration.html', {'form': form})
-
-
+# Подтверждение регистрации пользователя
 class ConfirmRegistrationView(View):
     template_name = 'profiles/confirm_registration.html'
 
@@ -337,16 +317,21 @@ class ConfirmRegistrationView(View):
         form = ConfirmationCodeForm(request.POST)
         if form.is_valid():
             code = form.cleaned_data['code']
-            # Проверка совпадения кода с кодом пользователя
-            if request.user.profile.check_confirmation_code(code):
-                request.user.profile.confirm_registration()  # Подтверждение регистрации пользователя
-                return redirect('post-list')  # Редирект на главную страницу после подтверждения регистрации
+            user = request.user
+            profile = user.profile
+            if profile.check_confirmation_code(code):
+                profile.confirm_registration()
+                profile.email_confirmed = True
+                profile.save()
+
+                return HttpResponseRedirect(
+                    reverse_lazy('post-list'))  # Редирект на главную страницу после подтверждения регистрации
             else:
-                form.add_error('code', 'Неверный код подтверждения')
+                form.add_error('code', 'Неверный код верификации')
         return render(request, self.template_name, {'form': form})
 
 
-#  Подписки на категории
+#  Подписки на категории постов
 class SubscriptionView(ListView):
     context_object_name = 'subscriptions'
     template_name = 'post_subscription.html'

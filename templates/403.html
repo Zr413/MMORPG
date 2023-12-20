@@ -3,10 +3,14 @@
 {% load crispy_forms_tags %}
 <html lang="ru">
 <head>
-   <meta charset="UTF-8">
-   <title>{% trans 'Error 403' %}</title>
+    <meta charset="UTF-8">
+    <title>{% trans 'Error 403' %}</title>
 </head>
 <body>
-   {% trans "You don't seem to have access to this page..." %}
+<ul>
+    <li>{% trans "Кажется, у вас нет доступа к этой странице или ваша почта не подтверждена..." %}</li>
+    <li><a href="{% url 'post-list' %}">На главную</a></li>
+    <li><a href="{% url 'confirm' %}" class="btn btn-primary">Подтвердить почту</a></li>
+</ul>
 </body>
 </html>

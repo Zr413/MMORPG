@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 
+# Модель пользователя и его профиля
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email_confirmed = models.BooleanField(default=False)
@@ -18,13 +19,14 @@ class Profile(models.Model):
         return self.user.profile
 
     def check_confirmation_code(self, code):
-        return self.one_time_password == code  # Checking if the provided code matches the one in the profile
+        return self.one_time_password == code
 
     def confirm_registration(self):
-        self.email_confirmed = True  # Marking the email as confirmed
-        self.save()  # Saving the profile
+        self.email_confirmed = True
+        self.save()
 
 
+# Модель категорий
 class Category(models.Model):
     name = models.CharField(max_length=100)
     subscribes = models.ManyToManyField(Profile, related_name='categories', through='Subscription')
@@ -34,6 +36,7 @@ class Category(models.Model):
         return self.name.title()
 
 
+# Модель постов
 class Post(models.Model):
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -50,6 +53,7 @@ class Post(models.Model):
         return reverse('post-detail', args=[str(self.id)])
 
 
+# Модель ответов на посты
 class Response(models.Model):
     post = models.ForeignKey(Post, related_name='responses', on_delete=models.CASCADE)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -58,6 +62,7 @@ class Response(models.Model):
     is_approved = models.BooleanField(default=False)
 
 
+# Модель подписок на категории и автора поста
 class Subscription(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE,  related_name='subscriptions')
     category = models.ForeignKey(Category, on_delete=models.CASCADE,  related_name='subscriptions')
