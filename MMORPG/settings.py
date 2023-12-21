@@ -49,18 +49,9 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'crispy_forms',
     'sorl.thumbnail',
-    # 'fpages',
     'django_filters',
     'django_otp',
     'django_otp.plugins.otp_totp',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.yandex',
-    # 'django_apscheduler',
-    # 'celery',
-    # 'drf_yasg',
-    # 'rest_framework'
 ]
 
 SITE_ID = 1
