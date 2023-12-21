@@ -16,7 +16,7 @@ class Profile(models.Model):
     one_time_password = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
-        return self.user.profile
+        return self.user.username
 
     def check_confirmation_code(self, code):
         return self.one_time_password == code
