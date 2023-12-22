@@ -1,12 +1,14 @@
 {% extends "flatpages/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-  <div class="login">
-    <h2>Войти</h2>
-    <form method="POST">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Войти</button>
-    </form>
-  </div>
+    <div class="login">
+        <h2>Войти</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Войти</button>
+        </form>
+            <hr>
+        Забыли пароль? <a href="{% url 'password_reset' %}">Сбросить пароль</a>
+    </div>
 {% endblock %}

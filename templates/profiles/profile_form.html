@@ -22,4 +22,10 @@
     {% if request.user.is_authenticated %}
         <a href="{% url 'confirm' %}" class="btn btn-primary">Подтвердить профиль</a>
     {% endif %}
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'password_change' %}" class="btn btn-primary">Сменить пароль</a>
+    {% endif %}
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'password_reset' %}" class="btn btn-primary">Восстановление пароля</a>
+    {% endif %}
 {% endblock %}

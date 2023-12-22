@@ -1,5 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import password_validation
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm, PasswordResetForm
 from django.contrib.auth.models import User, Group
 from django.core.mail import mail_admins, EmailMultiAlternatives
 
@@ -87,3 +88,56 @@ class ProfileForm(forms.ModelForm):
 
 class ResponseFilterForm(forms.Form):
     category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Выберите категорию", required=False)
+
+
+class UserForgotPasswordForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="Email",
+        max_length=254,
+        widget=forms.EmailInput(
+            attrs={'class': 'form-control',
+                   'placeholder': 'Введите Email',
+                   "autocomplete": "email"}
+        )
+    )
+
+
+class UserPasswordChangeForm(SetPasswordForm):
+    """
+    Форма изменения пароля
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        Обновление стилей формы
+        """
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    error_messages = {
+        "password_mismatch": "Пароли не совпадают"
+    }
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput(
+            attrs={'class': 'form-control',
+                   'placeholder': 'Введите новый пароль',
+                   "autocomplete": "new-password"}
+        ),
+        strip=False,
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+    new_password2 = forms.CharField(
+        label='Подтверждение нового пароля',
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={'class': 'form-control',
+                   'placeholder': 'Подтвердите новый пароль',
+                   "autocomplete": "new-password"}
+        ),
+    )

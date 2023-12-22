@@ -6,7 +6,8 @@ from django.contrib.auth import views as auth_views
 
 from guild.views import ResponseApproveView, ResponseModerationView, PostListView, PostDetailView, PostCreateView, \
     PostUpdateView, PostDeleteView, ResponseCreateView, ResponseView, UserRegisterView, \
-    ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView, ConfirmRegistrationView
+    ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView, ConfirmRegistrationView, \
+    UserPasswordChangeView, UserForgotPasswordView, UserPasswordResetConfirmView
 
 urlpatterns = [
     path('', PostListView.as_view(), name='post-list'),
@@ -27,4 +28,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(template_name='profiles/logout.html'), name='logout'),
     path('register/', UserRegisterView.as_view(), name='register'),
     path('profile/<int:pk>/', ProfileUpdateView.as_view(), name='profile'),
+    path('password-change/', UserPasswordChangeView.as_view(), name='password_change'),
+    path('password-reset/', UserForgotPasswordView.as_view(), name='password_reset'),
+    path('set-new-password/<uidb64>/<token>/', UserPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
