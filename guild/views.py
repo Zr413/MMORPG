@@ -316,6 +316,7 @@ class ConfirmRegistrationView(View):
         form = ConfirmationCodeForm()
         return render(request, self.template_name, {'form': form})
 
+    # Рендер формы подтверждения регистрации
     def post(self, request, *args, **kwargs):
         form = ConfirmationCodeForm(request.POST)
         if form.is_valid():
