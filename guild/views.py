@@ -375,6 +375,7 @@ class UnsubscribeView(DeleteView):
         return redirect('subscriptions')
 
 
+#  Изменение пароля пользователя
 class UserPasswordChangeView(SuccessMessageMixin, PasswordChangeView):
     """
     Изменение пароля пользователя
@@ -389,10 +390,12 @@ class UserPasswordChangeView(SuccessMessageMixin, PasswordChangeView):
         context['title'] = 'Изменение пароля на сайте'
         return context
 
+    # Обновление авторизованного пользователя после изменения пароля
     def get_success_url(self):
         return reverse_lazy('profile', kwargs={'pk': self.request.user.profile.pk})
 
 
+#  Запрос на восстановление пароля
 class UserForgotPasswordView(SuccessMessageMixin, PasswordResetView):
     """
     Представление по сбросу пароля по почте
@@ -409,7 +412,12 @@ class UserForgotPasswordView(SuccessMessageMixin, PasswordResetView):
         context['title'] = 'Запрос на восстановление пароля'
         return context
 
+    # Добавление заголовка и текста для формы
+    def get_success_url(self):
+        return reverse_lazy('password_reset_done')
 
+
+#  Установка нового пароля после запроса на восстановление пароля и кода подтверждения
 class UserPasswordResetConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
     """
     Представление установки нового пароля
@@ -423,3 +431,6 @@ class UserPasswordResetConfirmView(SuccessMessageMixin, PasswordResetConfirmView
         context = super().get_context_data(**kwargs)
         context['title'] = 'Установить новый пароль'
         return context
+
+    def get_success_url(self):
+        return reverse_lazy('password_reset_complete')

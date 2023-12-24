@@ -90,18 +90,7 @@ class ResponseFilterForm(forms.Form):
     category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Выберите категорию", required=False)
 
 
-class UserForgotPasswordForm(PasswordResetForm):
-    email = forms.EmailField(
-        label="Email",
-        max_length=254,
-        widget=forms.EmailInput(
-            attrs={'class': 'form-control',
-                   'placeholder': 'Введите Email',
-                   "autocomplete": "email"}
-        )
-    )
-
-
+# Форма изменения пароля
 class UserPasswordChangeForm(SetPasswordForm):
     """
     Форма изменения пароля
@@ -118,6 +107,20 @@ class UserPasswordChangeForm(SetPasswordForm):
             })
 
 
+# Форма восстановления пароля
+class UserForgotPasswordForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="Email",
+        max_length=254,
+        widget=forms.EmailInput(
+            attrs={'class': 'form-control',
+                   'placeholder': 'Введите Email',
+                   "autocomplete": "email"}
+        )
+    )
+
+
+# Форма установки нового пароля для пользователя.
 class CustomSetPasswordForm(SetPasswordForm):
     error_messages = {
         "password_mismatch": "Пароли не совпадают"
