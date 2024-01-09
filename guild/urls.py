@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from MMORPG import settings
 from django.contrib.auth import views as auth_views
 
+from guild import views
 from guild.views import ResponseApproveView, ResponseModerationView, PostListView, PostDetailView, PostCreateView, \
     PostUpdateView, PostDeleteView, ResponseCreateView, ResponseView, UserRegisterView, \
     ProfileUpdateView, ResponseDeleteView, SubscriptionView, UnsubscribeView, ConfirmRegistrationView, \
@@ -38,4 +39,5 @@ urlpatterns = [
                        name='password_reset_complete'),
                   path('set-new-password/<uidb64>/<token>/', UserPasswordResetConfirmView.as_view(),
                        name='password_reset_confirm'),
+                  path('api/post/', views.PostListCreate.as_view()),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

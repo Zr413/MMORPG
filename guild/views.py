@@ -13,6 +13,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django_filters.views import FilterView
+from rest_framework import generics
 
 from MMORPG import settings
 
@@ -28,6 +29,7 @@ import pytz
 from django.contrib import messages
 from .forms import UserRegisterForm
 from .filters import ResponseFilter, PostFilter
+from .serializers import PostSerializer
 
 
 # Показать все объявления
@@ -435,3 +437,8 @@ class UserPasswordResetConfirmView(SuccessMessageMixin, PasswordResetConfirmView
 
     def get_success_url(self):
         return reverse_lazy('password_reset_complete')
+
+
+class PostListCreate(generics.ListCreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer

@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'django_filters',
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'rest_framework',
+    'frontend',
 ]
 
 SITE_ID = 1
